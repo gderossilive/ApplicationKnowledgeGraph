@@ -4,6 +4,8 @@ param(
     [Parameter(Mandatory = $true)] [string]$PosSourceArchiveSha256,
     [Parameter(Mandatory = $true)] [string]$PosBuildSdkUri,
     [Parameter(Mandatory = $true)] [string]$PosBuildSdkSha512,
+    [Parameter(Mandatory = $true)] [string]$Net461ReferenceAssembliesUri,
+    [Parameter(Mandatory = $true)] [string]$Net461ReferenceAssembliesSha256,
     [Parameter(Mandatory = $true)] [string]$CatalogBaseUrl,
     [Parameter(Mandatory = $true)] [string]$AspNetCoreHostingBundleUri,
     [Parameter(Mandatory = $true)] [string]$SqlServerHost,
@@ -36,6 +38,8 @@ Install-WindowsFeature -Name Web-Server, Web-Asp-Net45 -IncludeManagementTools |
 $hostingBundle = Join-Path $packageRoot 'dotnet-hosting.exe'
 $sourcePackage = Join-Path $packageRoot 'TailwindPOS-source.zip'
 $sdkInstaller = Join-Path $packageRoot 'dotnet-sdk-2.2.207-win-x64.exe'
+$net461ReferencePackage = Join-Path $packageRoot 'microsoft.netframework.referenceassemblies.net461.1.0.3.nupkg'
+$net461ReferenceRoot = Join-Path $packageRoot 'net461-reference-assemblies'
 $posPackage = Join-Path $artifactRoot 'TailwindPOS.zip'
 
 Invoke-WebRequest -Uri $AspNetCoreHostingBundleUri -OutFile $hostingBundle
@@ -43,15 +47,21 @@ Start-Process -FilePath $hostingBundle -ArgumentList '/quiet', '/norestart' -Wai
 
 Get-VerifiedFile -Uri $PosSourceArchiveUri -Path $sourcePackage -ExpectedHash $PosSourceArchiveSha256
 Get-VerifiedFile -Uri $PosBuildSdkUri -Path $sdkInstaller -ExpectedHash $PosBuildSdkSha512 -Algorithm SHA512
+Get-VerifiedFile -Uri $Net461ReferenceAssembliesUri -Path $net461ReferencePackage -ExpectedHash $Net461ReferenceAssembliesSha256
 Start-Process -FilePath $sdkInstaller -ArgumentList '/install', '/quiet', '/norestart' -Wait
-Remove-Item -LiteralPath $sourceRoot, $publishRoot -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $sourceRoot, $publishRoot, $net461ReferenceRoot -Recurse -Force -ErrorAction SilentlyContinue
 Expand-Archive -LiteralPath $sourcePackage -DestinationPath $sourceRoot -Force
+Expand-Archive -LiteralPath $net461ReferencePackage -DestinationPath $net461ReferenceRoot -Force
+$frameworkPathOverride = Join-Path $net461ReferenceRoot 'build\.NETFramework\v4.6.1'
+if (-not (Test-Path -LiteralPath (Join-Path $frameworkPathOverride 'mscorlib.dll'))) {
+    throw 'The downloaded net461 reference assemblies package does not contain mscorlib.dll.'
+}
 $projectPath = Get-ChildItem -LiteralPath $sourceRoot -Filter 'TailwindPOS.csproj' -Recurse | Select-Object -First 1 -ExpandProperty FullName
 if ($null -eq $projectPath) {
     throw 'TailwindPOS.csproj was not found in the source archive.'
 }
 
-& 'C:\Program Files\dotnet\dotnet.exe' publish $projectPath --configuration Release --output $publishRoot
+& 'C:\Program Files\dotnet\dotnet.exe' publish $projectPath --configuration Release --output $publishRoot "/p:FrameworkPathOverride=$frameworkPathOverride"
 if ($LASTEXITCODE -ne 0) {
     throw "TailwindPOS publish failed with exit code $LASTEXITCODE."
 }

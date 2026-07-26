@@ -56,6 +56,12 @@ param posBuildSdkUri string
 @description('SHA-512 checksum for the .NET SDK 2.2.207 Windows installer.')
 param posBuildSdkSha512 string
 
+@description('Immutable Microsoft NuGet package containing .NET Framework 4.6.1 reference assemblies for the legacy POS build.')
+param net461ReferenceAssembliesUri string
+
+@description('SHA-256 checksum for the .NET Framework 4.6.1 reference assemblies package.')
+param net461ReferenceAssembliesSha256 string
+
 @description('URI for the supported ASP.NET Core 2.2 Hosting Bundle installer retained by your artifact repository.')
 param aspNetCoreHostingBundleUri string
 
@@ -437,7 +443,7 @@ resource posBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
       fileUris: [
         posBootstrapScriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-PosVm.ps1 -PosSourceArchiveUri "${posSourceArchiveUri}" -PosSourceArchiveSha256 "${posSourceArchiveSha256}" -PosBuildSdkUri "${posBuildSdkUri}" -PosBuildSdkSha512 "${posBuildSdkSha512}" -CatalogBaseUrl "http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/" -AspNetCoreHostingBundleUri "${aspNetCoreHostingBundleUri}" -SqlServerHost "${sqlPrivateIp}" -SqlDatabaseName "TailwindPOS" -SqlAppUsername "tailwindpos_app" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-PosVm.ps1 -PosSourceArchiveUri "${posSourceArchiveUri}" -PosSourceArchiveSha256 "${posSourceArchiveSha256}" -PosBuildSdkUri "${posBuildSdkUri}" -PosBuildSdkSha512 "${posBuildSdkSha512}" -Net461ReferenceAssembliesUri "${net461ReferenceAssembliesUri}" -Net461ReferenceAssembliesSha256 "${net461ReferenceAssembliesSha256}" -CatalogBaseUrl "http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/" -AspNetCoreHostingBundleUri "${aspNetCoreHostingBundleUri}" -SqlServerHost "${sqlPrivateIp}" -SqlDatabaseName "TailwindPOS" -SqlAppUsername "tailwindpos_app" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}"'
     }
   }
   dependsOn: [
