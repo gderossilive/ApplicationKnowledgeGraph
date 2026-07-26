@@ -478,7 +478,7 @@ resource sqlBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
         sqlDatabaseSchemaScriptUri
         sqlDatabaseSeedScriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -AdminUsername "${adminUsername}" -AdminPasswordBase64 "${base64(adminPassword)}" -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
     }
   }
 }

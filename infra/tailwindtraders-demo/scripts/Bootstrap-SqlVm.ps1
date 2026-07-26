@@ -1,9 +1,12 @@
 [CmdletBinding()]
 param(
+    [Parameter(Mandatory = $true)] [string]$AdminUsername,
+    [Parameter(Mandatory = $true)] [string]$AdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAppPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SchemaScriptSha256,
-    [Parameter(Mandatory = $true)] [string]$SeedScriptSha256
+    [Parameter(Mandatory = $true)] [string]$SeedScriptSha256,
+    [switch]$RunAsAdmin
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,6 +56,43 @@ $sqlAdminPassword = Get-DecodedSecret $SqlAdminPasswordBase64
 $sqlAppPassword = Get-DecodedSecret $SqlAppPasswordBase64
 if ($sqlAdminPassword -match '["\r\n]') {
     throw 'sqlAdminPassword must not contain a double quote or a line break.'
+}
+
+if (-not $RunAsAdmin) {
+    $taskName = 'TailwindDemo-InitializeSql'
+    $adminPassword = Get-DecodedSecret $AdminPasswordBase64
+    $taskArguments = @(
+        '-NoProfile',
+        '-ExecutionPolicy Bypass',
+        "-File `"$PSCommandPath`"",
+        '-RunAsAdmin',
+        "-AdminUsername `"$AdminUsername`"",
+        "-AdminPasswordBase64 `"$AdminPasswordBase64`"",
+        "-SqlAdminPasswordBase64 `"$SqlAdminPasswordBase64`"",
+        "-SqlAppPasswordBase64 `"$SqlAppPasswordBase64`"",
+        "-SchemaScriptSha256 `"$SchemaScriptSha256`"",
+        "-SeedScriptSha256 `"$SeedScriptSha256`""
+    ) -join ' '
+    $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $taskArguments
+    Register-ScheduledTask -TaskName $taskName -Action $taskAction -User ".\$AdminUsername" -Password $adminPassword -RunLevel Highest -Force | Out-Null
+    Start-ScheduledTask -TaskName $taskName
+
+    try {
+        for ($attempt = 1; $attempt -le 600; $attempt++) {
+            $taskInfo = Get-ScheduledTaskInfo -TaskName $taskName
+            if ((Get-ScheduledTask -TaskName $taskName).State -ne 'Running') {
+                if ($taskInfo.LastTaskResult -ne 0) {
+                    throw "SQL initialization task failed with exit code $($taskInfo.LastTaskResult)."
+                }
+                exit 0
+            }
+            Start-Sleep -Seconds 2
+        }
+        throw 'SQL initialization task timed out after 20 minutes.'
+    }
+    finally {
+        Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+    }
 }
 
 $instanceId = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').MSSQLSERVER
