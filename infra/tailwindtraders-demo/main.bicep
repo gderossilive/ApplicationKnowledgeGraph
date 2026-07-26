@@ -32,7 +32,7 @@ param posVmSize string = 'Standard_B1ms'
 @description('Burstable Windows VM size for the private product catalog server. B1s is sufficient for the PowerShell listener.')
 param catalogVmSize string = 'Standard_B1s'
 
-@description('Burstable Windows VM size for the private SQL Server Express database server. B1ms provides the minimum practical 2 GiB RAM.')
+@description('Burstable Windows VM size for the private SQL Server 2017 Developer database server. B1ms provides the minimum practical 2 GiB RAM for the demo.')
 param sqlVmSize string = 'Standard_B1ms'
 
 @description('Versioned URI of the POS bootstrap script. Host this script in a controlled artifact location before deployment.')
@@ -58,12 +58,6 @@ param posBuildSdkSha512 string
 
 @description('URI for the supported ASP.NET Core 2.2 Hosting Bundle installer retained by your artifact repository.')
 param aspNetCoreHostingBundleUri string
-
-@description('Official URI for the SQL Server 2017 Express x64 bootstrapper downloaded by the SQL VM.')
-param sqlServerBootstrapperUri string
-
-@description('SHA-256 checksum for the SQL Server 2017 Express bootstrapper.')
-param sqlServerBootstrapperSha256 string
 
 @description('Versioned URI of the Tailwind POS SQL Server schema script.')
 param sqlDatabaseSchemaScriptUri string
@@ -102,6 +96,12 @@ var windowsImage = {
   publisher: 'MicrosoftWindowsServer'
   offer: 'WindowsServer'
   sku: '2022-datacenter-azure-edition'
+  version: 'latest'
+}
+var sqlServer2017DeveloperImage = {
+  publisher: 'MicrosoftSQLServer'
+  offer: 'SQL2017-WS2016'
+  sku: 'SQLDEV'
   version: 'latest'
 }
 
@@ -403,7 +403,7 @@ resource sqlVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       adminPassword: adminPassword
     }
     storageProfile: {
-      imageReference: windowsImage
+      imageReference: sqlServer2017DeveloperImage
       osDisk: {
         createOption: 'FromImage'
         managedDisk: {
@@ -478,7 +478,7 @@ resource sqlBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
         sqlDatabaseSchemaScriptUri
         sqlDatabaseSeedScriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -SqlServerBootstrapperUri "${sqlServerBootstrapperUri}" -SqlServerBootstrapperSha256 "${sqlServerBootstrapperSha256}" -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
     }
   }
 }

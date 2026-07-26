@@ -1,7 +1,5 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)] [string]$SqlServerBootstrapperUri,
-    [Parameter(Mandatory = $true)] [string]$SqlServerBootstrapperSha256,
     [Parameter(Mandatory = $true)] [string]$SqlAdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAppPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SchemaScriptSha256,
@@ -9,30 +7,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$packageRoot = 'C:\TailwindDemo\packages'
-$mediaRoot = 'C:\TailwindDemo\sql-media'
 $databaseName = 'TailwindPOS'
 $appLogin = 'tailwindpos_app'
-$sqlInstance = 'SQLEXPRESS'
-
-function Get-VerifiedFile {
-    param([string]$Uri, [string]$Path, [string]$ExpectedHash)
-
-    Invoke-WebRequest -Uri $Uri -OutFile $Path
-    $actualHash = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
-    if ($actualHash -ne $ExpectedHash.ToUpperInvariant()) {
-        throw "Checksum validation failed for '$Uri'."
-    }
-}
-
-function Assert-MicrosoftSignature {
-    param([string]$Path)
-
-    $signature = Get-AuthenticodeSignature -LiteralPath $Path
-    if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'CN=Microsoft Corporation') {
-        throw "The Microsoft Authenticode signature validation failed for '$Path'."
-    }
-}
+$sqlServiceName = 'MSSQLSERVER'
 
 function Get-DecodedSecret {
     param([string]$Base64Value)
@@ -78,73 +55,20 @@ if ($sqlAdminPassword -match '["\r\n]') {
     throw 'sqlAdminPassword must not contain a double quote or a line break.'
 }
 
-New-Item -ItemType Directory -Force -Path $packageRoot, $mediaRoot | Out-Null
-$downloadRoot = Join-Path $packageRoot 'sql-server-2017-download'
-$bootstrapperPath = Join-Path $downloadRoot 'SQLServer2017-SSEI-Expr.exe'
-Remove-Item -LiteralPath $downloadRoot, $mediaRoot -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force -Path $downloadRoot, $mediaRoot | Out-Null
-Get-VerifiedFile -Uri $SqlServerBootstrapperUri -Path $bootstrapperPath -ExpectedHash $SqlServerBootstrapperSha256
-Assert-MicrosoftSignature -Path $bootstrapperPath
-
-$downloadProcess = Start-Process -FilePath $bootstrapperPath -ArgumentList @(
-    '/ACTION=Download',
-    '/MEDIATYPE=Express',
-    '/QUIET',
-    "/MEDIAPATH=$downloadRoot"
-) -Wait -PassThru
-if ($downloadProcess.ExitCode -notin 0, 3010) {
-    throw "SQL Server Express media download failed with exit code $($downloadProcess.ExitCode)."
-}
-
-$expressMedia = Get-ChildItem -LiteralPath $downloadRoot -Filter 'SQLEXPR*_x64_ENU.exe' -Recurse | Select-Object -First 1 -ExpandProperty FullName
-if ($null -eq $expressMedia) {
-    throw 'The SQL Server Express downloader did not create an x64 media executable.'
-}
-Assert-MicrosoftSignature -Path $expressMedia
-
-$extractProcess = Start-Process -FilePath $expressMedia -ArgumentList @(
-    "/x:$mediaRoot",
-    '/Q'
-) -Wait -PassThru
-if ($extractProcess.ExitCode -notin 0, 3010) {
-    throw "SQL Server Express media extraction failed with exit code $($extractProcess.ExitCode)."
-}
-$setupPath = Get-ChildItem -LiteralPath $mediaRoot -Filter 'setup.exe' -Recurse | Select-Object -First 1 -ExpandProperty FullName
-if ($null -eq $setupPath) {
-    throw 'The extracted SQL Server Express media does not contain setup.exe.'
-}
-
-$setupArguments = @(
-    '/Q',
-    '/ACTION=Install',
-    '/FEATURES=SQLEngine',
-    "/INSTANCENAME=$sqlInstance",
-    '/SQLSVCACCOUNT="NT AUTHORITY\NETWORK SERVICE"',
-    '/SQLSYSADMINACCOUNTS="BUILTIN\Administrators"',
-    '/SECURITYMODE=SQL',
-    "/SAPWD=`"$sqlAdminPassword`"",
-    '/TCPENABLED=1',
-    '/IACCEPTSQLSERVERLICENSETERMS'
-)
-$process = Start-Process -FilePath $setupPath -ArgumentList $setupArguments -Wait -PassThru
-if ($process.ExitCode -notin 0, 3010) {
-    throw "SQL Server setup failed with exit code $($process.ExitCode)."
-}
-
-$instanceId = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$sqlInstance
+$instanceId = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').MSSQLSERVER
 if ([string]::IsNullOrWhiteSpace($instanceId)) {
-    throw "SQL Server instance '$sqlInstance' was not registered."
+    throw 'The SQL Server 2017 Developer Marketplace image did not register its default instance.'
 }
 $tcpPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$instanceId\MSSQLServer\SuperSocketNetLib\Tcp"
 Set-ItemProperty -LiteralPath $tcpPath -Name Enabled -Value 1
 Set-ItemProperty -LiteralPath "$tcpPath\IPAll" -Name TcpDynamicPorts -Value ''
 Set-ItemProperty -LiteralPath "$tcpPath\IPAll" -Name TcpPort -Value '1433'
-Restart-Service -Name "MSSQL`$$sqlInstance" -Force
+Restart-Service -Name $sqlServiceName -Force
 
-$adminConnectionString = "Server=localhost\$sqlInstance;Initial Catalog=master;User ID=sa;Password=$sqlAdminPassword;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15"
+$marketplaceConnectionString = 'Server=localhost;Initial Catalog=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15'
 for ($attempt = 1; $attempt -le 30; $attempt++) {
     try {
-        [void](Get-SqlScalar -ConnectionString $adminConnectionString -CommandText 'SELECT 1;')
+        [void](Get-SqlScalar -ConnectionString $marketplaceConnectionString -CommandText 'SELECT 1;')
         break
     }
     catch {
@@ -155,11 +79,15 @@ for ($attempt = 1; $attempt -le 30; $attempt++) {
     }
 }
 
+$escapedAdminPassword = $sqlAdminPassword.Replace("'", "''")
+Invoke-SqlText -ConnectionString $marketplaceConnectionString -CommandText "ALTER LOGIN [sa] ENABLE; ALTER LOGIN [sa] WITH PASSWORD = N'$escapedAdminPassword';"
+$adminConnectionString = "Server=localhost;Initial Catalog=master;User ID=sa;Password=$sqlAdminPassword;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15"
+
 if ($null -eq (Get-SqlScalar -ConnectionString $adminConnectionString -CommandText "SELECT DB_ID(N'$databaseName');")) {
     Invoke-SqlText -ConnectionString $adminConnectionString -CommandText "CREATE DATABASE [$databaseName] COLLATE SQL_Latin1_General_CP1_CI_AS;"
 }
 
-$databaseConnectionString = "Server=localhost\$sqlInstance;Initial Catalog=$databaseName;User ID=sa;Password=$sqlAdminPassword;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15"
+$databaseConnectionString = "Server=localhost;Initial Catalog=$databaseName;User ID=sa;Password=$sqlAdminPassword;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15"
 $schemaPath = Join-Path $PSScriptRoot 'Schema-TailwindPos.sql'
 $seedPath = Join-Path $PSScriptRoot 'Seed-TailwindPos.sql'
 foreach ($scriptFile in @(

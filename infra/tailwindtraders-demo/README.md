@@ -4,7 +4,7 @@ This directory provisions an isolated Azure demo environment with three Windows 
 
 - `*-pos-vm`: IIS, ASP.NET Core 2.2 hosting bundle, and the POS web application.
 - `*-catalog-vm`: the minimal product endpoint consumed by the POS.
-- `*-sql-vm`: SQL Server 2017 Express with the Tailwind POS database migrated from `POS.mdb`.
+- `*-sql-vm`: SQL Server 2017 Developer from the Azure Marketplace image, with the Tailwind POS database migrated from `POS.mdb`. This is licensed only for the non-production demo.
 
 The catalog and SQL VMs have no public IP. The POS VM receives a static public IP and permits temporary HTTP access on port 80. RDP remains restricted to `adminSourceCidr`. SQL Server listens on TCP 1433 only for the POS subnet. Replace temporary HTTP/IP access with DNS and TLS before any non-demo usage.
 
@@ -18,7 +18,7 @@ Upload the following immutable, versioned artifacts to a controlled location rea
 2. `Schema-TailwindPos.sql` and `Seed-TailwindPos.sql` from [database](database). The seed is generated from the authoritative [POS.mdb](../../external/TailwindTraders-PointOfSale/Source/WinForms/Upgraded/POS.mdb).
 3. A ZIP with `CatalogStub.ps1` and `catalog.json` from [catalog-stub](catalog-stub), plus its SHA-256 hash.
 
-The SQL VM downloads the official Microsoft SQL Server 2017 Express bootstrapper itself, verifies its SHA-256 and Authenticode signature, retrieves the complete x64 Express media, verifies its Microsoft signature, and extracts it locally before installation. No SQL Server installer or media ZIP is stored in this repository or an external artifact location.
+The SQL VM uses the official `MicrosoftSQLServer:SQL2017-WS2016:SQLDEV` Marketplace image. The bootstrap configures its preinstalled default instance for TCP 1433, applies the schema and seed checksums, and creates the least-privileged application login. This avoids running the SQL Server 2017 Express downloader, whose WPF UI cannot run in the non-interactive Custom Script Extension context. No SQL Server installer or media ZIP is stored in this repository or an external artifact location.
 
 To regenerate the data seed after changing `POS.mdb`, install `mdbtools` and run:
 
@@ -28,7 +28,7 @@ bash infra/tailwindtraders-demo/database/Export-PosMdbToSqlServer.sh \
   infra/tailwindtraders-demo/database/Seed-TailwindPos.sql
 ```
 
-`artifacts/manifest.json` records the SHA-256 hashes of repository artifacts. After uploading them, replace only URI values in `main.parameters.json`; retain their recorded checksums. The SQL Server bootstrapper URL and checksum are already pinned in `main.parameters.json`.
+`artifacts/manifest.json` records the SHA-256 hashes of repository artifacts. After uploading them, replace only URI values in `main.parameters.json`; retain their recorded checksums.
 
 Do not place passwords, SAS tokens, or other secrets in `main.parameters.json`. Supply `adminPassword`, `sqlAdminPassword`, and `sqlAppPassword` through secure deployment parameters instead.
 
