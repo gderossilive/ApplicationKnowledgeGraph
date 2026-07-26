@@ -39,6 +39,7 @@ $hostingBundle = Join-Path $packageRoot 'dotnet-hosting.exe'
 $sourcePackage = Join-Path $packageRoot 'TailwindPOS-source.zip'
 $sdkInstaller = Join-Path $packageRoot 'dotnet-sdk-2.2.207-win-x64.exe'
 $net461ReferencePackage = Join-Path $packageRoot 'microsoft.netframework.referenceassemblies.net461.1.0.3.nupkg'
+$net461ReferenceArchive = Join-Path $packageRoot 'microsoft.netframework.referenceassemblies.net461.1.0.3.zip'
 $net461ReferenceRoot = Join-Path $packageRoot 'net461-reference-assemblies'
 $posPackage = Join-Path $artifactRoot 'TailwindPOS.zip'
 
@@ -51,7 +52,8 @@ Get-VerifiedFile -Uri $Net461ReferenceAssembliesUri -Path $net461ReferencePackag
 Start-Process -FilePath $sdkInstaller -ArgumentList '/install', '/quiet', '/norestart' -Wait
 Remove-Item -LiteralPath $sourceRoot, $publishRoot, $net461ReferenceRoot -Recurse -Force -ErrorAction SilentlyContinue
 Expand-Archive -LiteralPath $sourcePackage -DestinationPath $sourceRoot -Force
-Expand-Archive -LiteralPath $net461ReferencePackage -DestinationPath $net461ReferenceRoot -Force
+Copy-Item -LiteralPath $net461ReferencePackage -Destination $net461ReferenceArchive -Force
+Expand-Archive -LiteralPath $net461ReferenceArchive -DestinationPath $net461ReferenceRoot -Force
 $frameworkPathOverride = Join-Path $net461ReferenceRoot 'build\.NETFramework\v4.6.1'
 if (-not (Test-Path -LiteralPath (Join-Path $frameworkPathOverride 'mscorlib.dll'))) {
     throw 'The downloaded net461 reference assemblies package does not contain mscorlib.dll.'
