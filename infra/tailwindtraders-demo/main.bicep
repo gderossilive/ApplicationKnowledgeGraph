@@ -125,18 +125,27 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: posSubnetName
         properties: {
           addressPrefix: '10.42.1.0/24'
+          networkSecurityGroup: {
+            id: posNsg.id
+          }
         }
       }
       {
         name: catalogSubnetName
         properties: {
           addressPrefix: '10.42.2.0/24'
+          networkSecurityGroup: {
+            id: catalogNsg.id
+          }
         }
       }
       {
         name: sqlSubnetName
         properties: {
           addressPrefix: '10.42.3.0/24'
+          networkSecurityGroup: {
+            id: sqlNsg.id
+          }
         }
       }
     ]
@@ -263,9 +272,6 @@ resource posNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'aznicpos${resourceToken}'
   location: location
   properties: {
-    networkSecurityGroup: {
-      id: posNsg.id
-    }
     ipConfigurations: [
       {
         name: 'primary'
@@ -288,9 +294,6 @@ resource catalogNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'azniccat${resourceToken}'
   location: location
   properties: {
-    networkSecurityGroup: {
-      id: catalogNsg.id
-    }
     ipConfigurations: [
       {
         name: 'primary'
@@ -310,9 +313,6 @@ resource sqlNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'aznicsql${resourceToken}'
   location: location
   properties: {
-    networkSecurityGroup: {
-      id: sqlNsg.id
-    }
     ipConfigurations: [
       {
         name: 'primary'
