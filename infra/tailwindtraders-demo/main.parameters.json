@@ -12,13 +12,13 @@
       "value": "87.16.232.9/32"
     },
     "posBootstrapScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6dcab9c0c5c5beb162de20f1330af8d447a20719/infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1"
     },
     "catalogBootstrapScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6dcab9c0c5c5beb162de20f1330af8d447a20719/infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1"
     },
     "sqlBootstrapScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6dcab9c0c5c5beb162de20f1330af8d447a20719/infra/tailwindtraders-demo/scripts/Bootstrap-SqlVm.ps1"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/scripts/Bootstrap-SqlVm.ps1"
     },
     "posSourceArchiveUri": {
       "value": "https://codeload.github.com/Microsoft/TailwindTraders-PointOfSale/zip/362483bf215883330dae3aa0d443a5cd00f561ab"
@@ -36,19 +36,19 @@
       "value": "https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/2.2.8/dotnet-hosting-2.2.8-win.exe"
     },
     "sqlDatabaseSchemaScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6dcab9c0c5c5beb162de20f1330af8d447a20719/infra/tailwindtraders-demo/database/Schema-TailwindPos.sql"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/database/Schema-TailwindPos.sql"
     },
     "sqlDatabaseSchemaScriptSha256": {
       "value": "d523f5abe9a4bc9e6ccc9d3ff7778d05d5e8c09fdb6be166ee9c768cf909bb42"
     },
     "sqlDatabaseSeedScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6dcab9c0c5c5beb162de20f1330af8d447a20719/infra/tailwindtraders-demo/database/Seed-TailwindPos.sql"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/database/Seed-TailwindPos.sql"
     },
     "sqlDatabaseSeedScriptSha256": {
       "value": "056de00a39d95da0967ac9a5ba315c38d3f111b28ff2d7083a75dad087badb5e"
     },
     "catalogArtifactUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6dcab9c0c5c5beb162de20f1330af8d447a20719/infra/tailwindtraders-demo/artifacts/catalog-stub.zip"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/artifacts/catalog-stub.zip"
     },
     "catalogArtifactSha256": {
       "value": "7d39f8a3b0d6f2078c5791f6ff8cb930a6721a50714c528bb1474f1f2c0108ea"
