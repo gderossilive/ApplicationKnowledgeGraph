@@ -28,4 +28,5 @@ $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal | Out-Null
+New-NetFirewallRule -DisplayName 'Tailwind POS Catalog from POS subnet' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 -RemoteAddress '10.42.1.0/24' -ErrorAction SilentlyContinue | Out-Null
 Start-ScheduledTask -TaskName $taskName
