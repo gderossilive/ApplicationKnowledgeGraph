@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)] [string]$AdminUsername,
-    [Parameter(Mandatory = $true)] [string]$AdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAppPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SchemaScriptSha256,
@@ -60,14 +59,12 @@ if ($sqlAdminPassword -match '["\r\n]') {
 
 if (-not $RunAsAdmin) {
     $taskName = 'TailwindDemo-InitializeSql'
-    $adminPassword = Get-DecodedSecret $AdminPasswordBase64
     $taskArguments = @(
         '-NoProfile',
         '-ExecutionPolicy Bypass',
         "-File `"$PSCommandPath`"",
         '-RunAsAdmin',
         "-AdminUsername `"$AdminUsername`"",
-        "-AdminPasswordBase64 `"$AdminPasswordBase64`"",
         "-SqlAdminPasswordBase64 `"$SqlAdminPasswordBase64`"",
         "-SqlAppPasswordBase64 `"$SqlAppPasswordBase64`"",
         "-SchemaScriptSha256 `"$SchemaScriptSha256`"",
@@ -75,7 +72,9 @@ if (-not $RunAsAdmin) {
     ) -join ' '
     $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $taskArguments
     $taskUser = "$env:COMPUTERNAME\$AdminUsername"
-    Register-ScheduledTask -TaskName $taskName -Action $taskAction -User $taskUser -Password $adminPassword -RunLevel Highest -Force | Out-Null
+    $taskPrincipal = New-ScheduledTaskPrincipal -UserId $taskUser -LogonType S4U -RunLevel Highest
+    $task = New-ScheduledTask -Action $taskAction -Principal $taskPrincipal
+    Register-ScheduledTask -TaskName $taskName -InputObject $task -Force | Out-Null
     Start-ScheduledTask -TaskName $taskName
 
     try {
