@@ -76,13 +76,7 @@ Expand-Archive -LiteralPath $posPackage -DestinationPath $appRoot -Force
 
 $iniPath = Join-Path $appRoot 'TailwindPOS.ini'
 $sqlConnectionBuilder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
-$sqlConnectionBuilder.DataSource = "tcp:$SqlServerHost,1433"
-$sqlConnectionBuilder.InitialCatalog = $SqlDatabaseName
-$sqlConnectionBuilder.UserID = $SqlAppUsername
-$sqlConnectionBuilder.Password = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($SqlAppPasswordBase64))
-$sqlConnectionBuilder.Encrypt = $true
-$sqlConnectionBuilder.TrustServerCertificate = $true
-$sqlConnectionBuilder.PersistSecurityInfo = $false
+$sqlConnectionBuilder.ConnectionString = "Server=tcp:$SqlServerHost,1433;Database=$SqlDatabaseName;User ID=$SqlAppUsername;Password=$([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($SqlAppPasswordBase64)));Encrypt=True;TrustServerCertificate=True;Persist Security Info=False"
 @"
 [Connection String]
 DatabaseConnectionString = $($sqlConnectionBuilder.ConnectionString)
