@@ -1,0 +1,6 @@
+[submodule "external/TailwindTraders-PointOfSale"]
+	path = external/TailwindTraders-PointOfSale
+	url = https://github.com/microsoft/TailwindTraders-PointOfSale.git
+[submodule "external/java-webapp-oidc-migrate-poc"]
+	path = external/java-webapp-oidc-migrate-poc
+	url = https://github.com/microsoft/java-webapp-oidc-migrate-poc.git
