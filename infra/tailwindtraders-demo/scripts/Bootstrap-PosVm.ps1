@@ -97,8 +97,8 @@ if (Test-Path 'IIS:\Sites\TailwindPOS') {
     Remove-Website -Name 'TailwindPOS'
 }
 New-Website -Name 'TailwindPOS' -Port 80 -PhysicalPath $appRoot -ApplicationPool $appPoolName | Out-Null
-& icacls $appRoot /grant "IIS AppPool\$appPoolName:(OI)(CI)M" /T
+& icacls $appRoot /grant "IIS AppPool\${appPoolName}:(OI)(CI)M" /T
 & icacls $iniPath /inheritance:r
-& icacls $iniPath /grant:r "IIS AppPool\$appPoolName:(R)" 'BUILTIN\Administrators:(F)' 'SYSTEM:(F)'
+& icacls $iniPath /grant:r "IIS AppPool\${appPoolName}:(R)" 'BUILTIN\Administrators:(F)' 'SYSTEM:(F)'
 
 Start-Website -Name 'TailwindPOS'
