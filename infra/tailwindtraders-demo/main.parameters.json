@@ -18,7 +18,7 @@
       "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1"
     },
     "sqlBootstrapScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/db9e2765a5d51849111572885a07e00e268f9ed8/infra/tailwindtraders-demo/scripts/Bootstrap-SqlVm.ps1"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/e58ca61ce349ca806c2ceb2663a09e554a696e6d/infra/tailwindtraders-demo/scripts/Bootstrap-SqlVm.ps1"
     },
     "posSourceArchiveUri": {
       "value": "https://codeload.github.com/Microsoft/TailwindTraders-PointOfSale/zip/362483bf215883330dae3aa0d443a5cd00f561ab"
