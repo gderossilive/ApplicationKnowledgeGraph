@@ -12,7 +12,7 @@
       "value": "87.16.232.9/32"
     },
     "posBootstrapScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1ee2b2e3f5a31e012e683f0e810e5b75efb02292/infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/0d22df47969b5d2ab4223a4e94400d7bc960bab7/infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1"
     },
     "catalogBootstrapScriptUri": {
       "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1b18ff49ddfa858163314bbfe15f5385b66ac896/infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1"
