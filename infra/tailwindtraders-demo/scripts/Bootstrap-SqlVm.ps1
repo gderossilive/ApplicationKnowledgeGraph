@@ -119,7 +119,8 @@ $escapedAdminPassword = $sqlAdminPassword.Replace("'", "''")
 Invoke-SqlText -ConnectionString $marketplaceConnectionString -CommandText "ALTER LOGIN [sa] ENABLE; ALTER LOGIN [sa] WITH PASSWORD = N'$escapedAdminPassword';"
 $adminConnectionString = "Server=localhost;Initial Catalog=master;User ID=sa;Password=$sqlAdminPassword;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15"
 
-if ($null -eq (Get-SqlScalar -ConnectionString $adminConnectionString -CommandText "SELECT DB_ID(N'$databaseName');")) {
+$databaseId = Get-SqlScalar -ConnectionString $adminConnectionString -CommandText "SELECT DB_ID(N'$databaseName');"
+if ($null -eq $databaseId -or $databaseId -is [System.DBNull]) {
     Invoke-SqlText -ConnectionString $adminConnectionString -CommandText "CREATE DATABASE [$databaseName] COLLATE SQL_Latin1_General_CP1_CI_AS;"
 }
 
