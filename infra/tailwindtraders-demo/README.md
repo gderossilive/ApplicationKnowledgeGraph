@@ -1,27 +1,35 @@
 # TailwindTraders legacy demo infrastructure
 
-This directory provisions an isolated Azure demo environment with two Windows Server 2022 VMs:
+This directory provisions an isolated Azure demo environment with three Windows Server 2022 VMs:
 
-- `*-pos-vm`: IIS, ASP.NET Core 2.2 hosting bundle, Access Database Engine 2010 x64, the precompiled POS artifact, and an environment-specific `POS.mdb`.
+- `*-pos-vm`: IIS, ASP.NET Core 2.2 hosting bundle, and the POS web application.
 - `*-catalog-vm`: the minimal product endpoint consumed by the POS.
+- `*-sql-vm`: SQL Server 2017 Express with the Tailwind POS database migrated from `POS.mdb`.
 
-The catalog VM has no public IP. The POS VM receives a static public IP and permits temporary HTTP access on port 80. RDP remains restricted to `adminSourceCidr`. Replace temporary HTTP/IP access with DNS and TLS before any non-demo usage.
+The catalog and SQL VMs have no public IP. The POS VM receives a static public IP and permits temporary HTTP access on port 80. RDP remains restricted to `adminSourceCidr`. SQL Server listens on TCP 1433 only for the POS subnet. Replace temporary HTTP/IP access with DNS and TLS before any non-demo usage.
 
 ## Prepare artifacts
 
-Build the legacy POS on a compatible Windows build host with access to the Mobilize feed defined in [nuget.config](../../external/TailwindTraders-PointOfSale/Source/Web/nuget.config). Publish a ZIP containing the web application's deployable output, including `web.config` and `TailwindPOS.ini`.
+The POS VM builds the legacy POS from a source archive pinned to the TailwindTraders submodule commit. During bootstrap it installs .NET SDK 2.2.207, executes `dotnet publish`, and creates `C:\TailwindDemo\artifacts\TailwindPOS.zip` before installing the site in IIS.
 
 Upload the following immutable, versioned artifacts to a controlled location reachable by the VM extensions:
 
-1. `Bootstrap-PosVm.ps1` and `Bootstrap-CatalogVm.ps1` from `scripts/`.
-2. The precompiled POS ZIP and its SHA-256 hash.
-3. A copy of [POS.mdb](../../external/TailwindTraders-PointOfSale/Source/WinForms/Upgraded/POS.mdb) and its SHA-256 hash.
-4. A ZIP with `CatalogStub.ps1` and `catalog.json` from [catalog-stub](catalog-stub), plus its SHA-256 hash.
-5. The ASP.NET Core 2.2 Hosting Bundle and Access Database Engine 2010 x64 installers, retained internally because both are legacy dependencies.
+1. `Bootstrap-PosVm.ps1`, `Bootstrap-CatalogVm.ps1`, and `Bootstrap-SqlVm.ps1` from `scripts/`.
+2. `Schema-TailwindPos.sql` and `Seed-TailwindPos.sql` from [database](database). The seed is generated from the authoritative [POS.mdb](../../external/TailwindTraders-PointOfSale/Source/WinForms/Upgraded/POS.mdb).
+3. A ZIP with `CatalogStub.ps1` and `catalog.json` from [catalog-stub](catalog-stub), plus its SHA-256 hash.
+4. A ZIP containing the full SQL Server 2017 Express x64 installation media, with `setup.exe` at any level in the ZIP and a SHA-256 hash. Keep this Microsoft binary in a controlled artifact location.
 
-`artifacts/manifest.json` records the SHA-256 hashes of the catalog ZIP, database seed, and bootstrap scripts created in this repository. After uploading them, replace only their corresponding URI values in `main.parameters.json`; retain the recorded checksums. The POS ZIP must come from a successful Windows build and needs its own SHA-256 value. Keep the Access Database Engine installer in the controlled artifact location because the original Microsoft download endpoint is no longer stable.
+To regenerate the data seed after changing `POS.mdb`, install `mdbtools` and run:
 
-Do not place passwords, SAS tokens, or other secrets in `main.bicepparam`. Supply `adminPassword` through a secure deployment parameter instead.
+```bash
+bash infra/tailwindtraders-demo/database/Export-PosMdbToSqlServer.sh \
+  external/TailwindTraders-PointOfSale/Source/WinForms/Upgraded/POS.mdb \
+  infra/tailwindtraders-demo/database/Seed-TailwindPos.sql
+```
+
+`artifacts/manifest.json` records the SHA-256 hashes of repository artifacts. After uploading them, replace only URI values in `main.parameters.json`; retain their recorded checksums. Do not publish SQL Server installation media to the public repository without confirming the applicable redistribution rights.
+
+Do not place passwords, SAS tokens, or other secrets in `main.parameters.json`. Supply `adminPassword`, `sqlAdminPassword`, and `sqlAppPassword` through secure deployment parameters instead.
 
 ## Deploy
 
@@ -40,24 +48,24 @@ az deployment group what-if \
   --resource-group <resource-group> \
   --template-file infra/tailwindtraders-demo/main.bicep \
   --parameters @infra/tailwindtraders-demo/main.parameters.json \
-  --parameters adminPassword='<secure-value>'
+  --parameters adminPassword='<secure-value>' sqlAdminPassword='<secure-value>' sqlAppPassword='<secure-value>'
 
 az deployment group create \
   --resource-group <resource-group> \
   --template-file infra/tailwindtraders-demo/main.bicep \
   --parameters @infra/tailwindtraders-demo/main.parameters.json \
-  --parameters adminPassword='<secure-value>'
+  --parameters adminPassword='<secure-value>' sqlAdminPassword='<secure-value>' sqlAppPassword='<secure-value>'
 ```
 
-The deployment outputs the public IP of the POS and the private catalog URL. The POS bootstrap writes the private URL into `TailwindPOS.ini`, so it does not call `backend.tailwindtraders.com`.
+The deployment outputs the public IP of the POS and private catalog and SQL IPs. The POS bootstrap writes the private catalog URL and SQL connection string into `TailwindPOS.ini`, so it does not call `backend.tailwindtraders.com` and no longer requires an Access provider.
 
 ## Validate and operate
 
 1. From the POS VM, request `http://10.42.2.4:8080/webbff/v1/products/1000`; expect JSON with `name` and `price`.
-2. From outside Azure, verify that the catalog endpoint is unreachable.
+2. From the POS VM, verify `Test-NetConnection 10.42.3.4 -Port 1433` succeeds; from outside Azure, verify that both private endpoints are unreachable.
 3. Browse `http://<pos-public-ip>/` and complete a sale using a demo product code.
-4. Check IIS logs and Windows Event Viewer for IIS, OLEDB, and bitness errors.
-5. To reset the demo, stop IIS, replace `C:\inetpub\TailwindPOS\POS.mdb` with the seeded copy, then start IIS.
-6. To roll back, redeploy a prior immutable POS artifact and checksum through the POS VM extension.
+4. Check IIS logs and Windows Event Viewer for IIS and SQL Server connectivity errors.
+5. To reset the demo, delete the `TailwindPOS` database on the SQL VM and rerun the SQL VM extension with the same schema and seed artifacts.
+6. To roll back, redeploy prior immutable bootstrap scripts and checksums through the VM extensions.
 
-The Access database is appropriate only for low-concurrency demo traffic. Keep an expiry date and delete the resource group when the demonstration ends.
+SQL Server Express removes the Access provider and file-locking dependency, but it retains the SQL Server Express resource limits. Keep an expiry date and delete the resource group when the demonstration ends.

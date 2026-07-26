@@ -3,16 +3,28 @@
     "path": "infra/tailwindtraders-demo/artifacts/catalog-stub.zip",
     "sha256": "7d39f8a3b0d6f2078c5791f6ff8cb930a6721a50714c528bb1474f1f2c0108ea"
   },
-  "POS.mdb": {
-    "path": "infra/tailwindtraders-demo/artifacts/POS.mdb",
-    "sha256": "dbc58ab3a5050e4916b2647d540cb2c8c2e5ca94af3056c043786a6dc5b4dc21"
+  "Schema-TailwindPos.sql": {
+    "path": "infra/tailwindtraders-demo/database/Schema-TailwindPos.sql",
+    "sha256": "d523f5abe9a4bc9e6ccc9d3ff7778d05d5e8c09fdb6be166ee9c768cf909bb42"
+  },
+  "Seed-TailwindPos.sql": {
+    "path": "infra/tailwindtraders-demo/database/Seed-TailwindPos.sql",
+    "sha256": "056de00a39d95da0967ac9a5ba315c38d3f111b28ff2d7083a75dad087badb5e"
+  },
+  "Export-PosMdbToSqlServer.sh": {
+    "path": "infra/tailwindtraders-demo/database/Export-PosMdbToSqlServer.sh",
+    "sha256": "7ef61d5b1be470e5a1c8d799f012dc5aa8c205d195641efa7a6d5fbf46b43cb5"
   },
   "Bootstrap-PosVm.ps1": {
     "path": "infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1",
-    "sha256": "3704101fc35d38e71935a69dd8754cf7dd4c2a13bf994bb6ecab82db5a67f3f6"
+    "sha256": "cb2c7c2848656a09555086b400df4ae409beb77ccea2b17692e8afc8a06d4f07"
   },
   "Bootstrap-CatalogVm.ps1": {
     "path": "infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1",
     "sha256": "9c6e21b8b72f2736d1e92819a3513a091592c5e5ed2297fea0b034f212688228"
+  },
+  "Bootstrap-SqlVm.ps1": {
+    "path": "infra/tailwindtraders-demo/scripts/Bootstrap-SqlVm.ps1",
+    "sha256": "3d791bf05f44eb6148729643981d5d24f6d0745c14525ea2d887bc3b16119932"
   }
 }

@@ -15,6 +15,14 @@ param adminUsername string
 @description('Administrator password configured on both Windows VMs.')
 param adminPassword string
 
+@secure()
+@description('SQL Server sa password used only by the database VM bootstrap.')
+param sqlAdminPassword string
+
+@secure()
+@description('Least-privileged SQL login password used by the POS application.')
+param sqlAppPassword string
+
 @description('CIDR allowed to open RDP to the POS VM. Set this to a trusted public IP range before deployment.')
 param adminSourceCidr string
 
@@ -24,29 +32,50 @@ param posVmSize string = 'Standard_D2s_v5'
 @description('Windows VM size for the private product catalog server.')
 param catalogVmSize string = 'Standard_B2s'
 
+@description('Windows VM size for the private SQL Server Express database server.')
+param sqlVmSize string = 'Standard_B2s'
+
 @description('Versioned URI of the POS bootstrap script. Host this script in a controlled artifact location before deployment.')
 param posBootstrapScriptUri string
 
 @description('Versioned URI of the catalog bootstrap script. Host this script in a controlled artifact location before deployment.')
 param catalogBootstrapScriptUri string
 
-@description('Versioned URI of the precompiled POS ZIP artifact.')
-param posArtifactUri string
+@description('Versioned URI of the SQL Server bootstrap script.')
+param sqlBootstrapScriptUri string
 
-@description('SHA-256 checksum for the precompiled POS ZIP artifact.')
-param posArtifactSha256 string
+@description('Immutable source ZIP used by the POS VM to build the deployment artifact locally.')
+param posSourceArchiveUri string
 
-@description('Versioned URI of the isolated POS.mdb database seed.')
-param posDatabaseUri string
+@description('SHA-256 checksum for the POS source ZIP.')
+param posSourceArchiveSha256 string
 
-@description('SHA-256 checksum for the isolated POS.mdb database seed.')
-param posDatabaseSha256 string
+@description('URI for the .NET SDK 2.2.207 Windows installer used to build the legacy POS locally.')
+param posBuildSdkUri string
+
+@description('SHA-512 checksum for the .NET SDK 2.2.207 Windows installer.')
+param posBuildSdkSha512 string
 
 @description('URI for the supported ASP.NET Core 2.2 Hosting Bundle installer retained by your artifact repository.')
 param aspNetCoreHostingBundleUri string
 
-@description('URI for the Microsoft Access Database Engine 2010 x64 installer retained by your artifact repository.')
-param accessDatabaseEngineUri string
+@description('URI for a verified ZIP containing SQL Server 2017 Express x64 installation media.')
+param sqlServerMediaUri string
+
+@description('SHA-256 checksum for the SQL Server 2017 Express media ZIP.')
+param sqlServerMediaSha256 string
+
+@description('Versioned URI of the Tailwind POS SQL Server schema script.')
+param sqlDatabaseSchemaScriptUri string
+
+@description('SHA-256 checksum for the Tailwind POS SQL Server schema script.')
+param sqlDatabaseSchemaScriptSha256 string
+
+@description('Versioned URI of the Tailwind POS SQL Server seed script exported from POS.mdb.')
+param sqlDatabaseSeedScriptUri string
+
+@description('SHA-256 checksum for the Tailwind POS SQL Server seed script.')
+param sqlDatabaseSeedScriptSha256 string
 
 @description('Versioned URI of the catalog stub ZIP artifact containing CatalogStub.ps1 and catalog.json.')
 param catalogArtifactUri string
@@ -58,12 +87,16 @@ var resourceToken = toLower(uniqueString(subscription().id, resourceGroup().id, 
 var virtualNetworkName = 'azvnet${resourceToken}'
 var posSubnetName = 'pos'
 var catalogSubnetName = 'catalog'
+var sqlSubnetName = 'sql'
 var posVmName = 'azpos${resourceToken}'
 var catalogVmName = 'azcat${resourceToken}'
+var sqlVmName = 'azsql${resourceToken}'
 var posComputerName = 'azpos${substring(resourceToken, 0, 10)}'
 var catalogComputerName = 'azcat${substring(resourceToken, 0, 10)}'
+var sqlComputerName = 'azsql${substring(resourceToken, 0, 10)}'
 var posPrivateIp = '10.42.1.4'
 var catalogPrivateIp = '10.42.2.4'
+var sqlPrivateIp = '10.42.3.4'
 var catalogApiPort = 8080
 var windowsImage = {
   publisher: 'MicrosoftWindowsServer'
@@ -92,6 +125,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: catalogSubnetName
         properties: {
           addressPrefix: '10.42.2.0/24'
+        }
+      }
+      {
+        name: sqlSubnetName
+        properties: {
+          addressPrefix: '10.42.3.0/24'
         }
       }
     ]
@@ -147,6 +186,41 @@ resource catalogNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: string(catalogApiPort)
+          sourceAddressPrefix: '10.42.1.0/24'
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
+        name: 'AllowRdpFromAdminNetwork'
+        properties: {
+          priority: 110
+          access: 'Allow'
+          direction: 'Inbound'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '3389'
+          sourceAddressPrefix: adminSourceCidr
+          destinationAddressPrefix: '*'
+        }
+      }
+    ]
+  }
+}
+
+resource sqlNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
+  name: 'aznsgsql${resourceToken}'
+  location: location
+  properties: {
+    securityRules: [
+      {
+        name: 'AllowSqlFromPosOnly'
+        properties: {
+          priority: 100
+          access: 'Allow'
+          direction: 'Inbound'
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '1433'
           sourceAddressPrefix: '10.42.1.0/24'
           destinationAddressPrefix: '*'
         }
@@ -226,6 +300,28 @@ resource catalogNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   }
 }
 
+resource sqlNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
+  name: 'aznicsql${resourceToken}'
+  location: location
+  properties: {
+    networkSecurityGroup: {
+      id: sqlNsg.id
+    }
+    ipConfigurations: [
+      {
+        name: 'primary'
+        properties: {
+          privateIPAllocationMethod: 'Static'
+          privateIPAddress: sqlPrivateIp
+          subnet: {
+            id: '${vnet.id}/subnets/${sqlSubnetName}'
+          }
+        }
+      }
+    ]
+  }
+}
+
 resource posVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   name: posVmName
   location: location
@@ -294,6 +390,40 @@ resource catalogVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
+resource sqlVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
+  name: sqlVmName
+  location: location
+  properties: {
+    hardwareProfile: {
+      vmSize: sqlVmSize
+    }
+    osProfile: {
+      computerName: sqlComputerName
+      adminUsername: adminUsername
+      adminPassword: adminPassword
+    }
+    storageProfile: {
+      imageReference: windowsImage
+      osDisk: {
+        createOption: 'FromImage'
+        managedDisk: {
+          storageAccountType: 'StandardSSD_LRS'
+        }
+      }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: sqlNic.id
+          properties: {
+            primary: true
+          }
+        }
+      ]
+    }
+  }
+}
+
 resource posBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
   parent: posVm
   name: 'azextpos${resourceToken}'
@@ -307,9 +437,12 @@ resource posBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
       fileUris: [
         posBootstrapScriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-PosVm.ps1 -PosArtifactUri "${posArtifactUri}" -PosArtifactSha256 "${posArtifactSha256}" -DatabaseUri "${posDatabaseUri}" -DatabaseSha256 "${posDatabaseSha256}" -CatalogBaseUrl "http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/" -AspNetCoreHostingBundleUri "${aspNetCoreHostingBundleUri}" -AccessDatabaseEngineUri "${accessDatabaseEngineUri}"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-PosVm.ps1 -PosSourceArchiveUri "${posSourceArchiveUri}" -PosSourceArchiveSha256 "${posSourceArchiveSha256}" -PosBuildSdkUri "${posBuildSdkUri}" -PosBuildSdkSha512 "${posBuildSdkSha512}" -CatalogBaseUrl "http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/" -AspNetCoreHostingBundleUri "${aspNetCoreHostingBundleUri}" -SqlServerHost "${sqlPrivateIp}" -SqlDatabaseName "TailwindPOS" -SqlAppUsername "tailwindpos_app" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}"'
     }
   }
+  dependsOn: [
+    sqlBootstrap
+  ]
 }
 
 resource catalogBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
@@ -330,6 +463,27 @@ resource catalogBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-
   }
 }
 
+resource sqlBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
+  parent: sqlVm
+  name: 'azextsql${resourceToken}'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
+    autoUpgradeMinorVersion: true
+    protectedSettings: {
+      fileUris: [
+        sqlBootstrapScriptUri
+        sqlDatabaseSchemaScriptUri
+        sqlDatabaseSeedScriptUri
+      ]
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -SqlServerMediaUri "${sqlServerMediaUri}" -SqlServerMediaSha256 "${sqlServerMediaSha256}" -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
+    }
+  }
+}
+
 output posPublicIpAddress string = posPublicIp.properties.ipAddress
 output catalogPrivateIpAddress string = catalogPrivateIp
 output catalogProductBaseUrl string = 'http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/'
+output sqlPrivateIpAddress string = sqlPrivateIp
