@@ -1,11 +1,9 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)] [string]$AdminUsername,
     [Parameter(Mandatory = $true)] [string]$SqlAdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAppPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SchemaScriptSha256,
-    [Parameter(Mandatory = $true)] [string]$SeedScriptSha256,
-    [switch]$RunAsAdmin
+    [Parameter(Mandatory = $true)] [string]$SeedScriptSha256
 )
 
 $ErrorActionPreference = 'Stop'
@@ -51,48 +49,44 @@ function Get-SqlScalar {
     }
 }
 
+function Ensure-LocalSystemSqlSysadmin {
+    param([string]$ConnectionString)
+
+    if ((Get-SqlScalar -ConnectionString $ConnectionString -CommandText "SELECT IS_SRVROLEMEMBER(N'sysadmin');") -eq 1) {
+        return
+    }
+
+    Stop-Service -Name $sqlServiceName -Force
+    try {
+        $startProcess = Start-Process -FilePath 'net.exe' -ArgumentList @('start', $sqlServiceName, '/m') -Wait -PassThru
+        if ($startProcess.ExitCode -ne 0) {
+            throw "SQL Server single-user start failed with exit code $($startProcess.ExitCode)."
+        }
+
+        $recoveryConnectionString = 'Server=localhost;Initial Catalog=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;Application Name=TailwindSqlRecovery;Connection Timeout=15'
+        for ($attempt = 1; $attempt -le 30; $attempt++) {
+            try {
+                Invoke-SqlText -ConnectionString $recoveryConnectionString -CommandText 'ALTER SERVER ROLE [sysadmin] ADD MEMBER [NT AUTHORITY\SYSTEM];'
+                return
+            }
+            catch {
+                if ($attempt -eq 30) {
+                    throw
+                }
+                Start-Sleep -Seconds 2
+            }
+        }
+    }
+    finally {
+        Stop-Service -Name $sqlServiceName -Force -ErrorAction SilentlyContinue
+        Start-Service -Name $sqlServiceName
+    }
+}
+
 $sqlAdminPassword = Get-DecodedSecret $SqlAdminPasswordBase64
 $sqlAppPassword = Get-DecodedSecret $SqlAppPasswordBase64
 if ($sqlAdminPassword -match '["\r\n]') {
     throw 'sqlAdminPassword must not contain a double quote or a line break.'
-}
-
-if (-not $RunAsAdmin) {
-    $taskName = 'TailwindDemo-InitializeSql'
-    $taskArguments = @(
-        '-NoProfile',
-        '-ExecutionPolicy Bypass',
-        "-File `"$PSCommandPath`"",
-        '-RunAsAdmin',
-        "-AdminUsername `"$AdminUsername`"",
-        "-SqlAdminPasswordBase64 `"$SqlAdminPasswordBase64`"",
-        "-SqlAppPasswordBase64 `"$SqlAppPasswordBase64`"",
-        "-SchemaScriptSha256 `"$SchemaScriptSha256`"",
-        "-SeedScriptSha256 `"$SeedScriptSha256`""
-    ) -join ' '
-    $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $taskArguments
-    $taskUser = "$env:COMPUTERNAME\$AdminUsername"
-    $taskPrincipal = New-ScheduledTaskPrincipal -UserId $taskUser -LogonType S4U -RunLevel Highest
-    $task = New-ScheduledTask -Action $taskAction -Principal $taskPrincipal
-    Register-ScheduledTask -TaskName $taskName -InputObject $task -Force | Out-Null
-    Start-ScheduledTask -TaskName $taskName
-
-    try {
-        for ($attempt = 1; $attempt -le 600; $attempt++) {
-            $taskInfo = Get-ScheduledTaskInfo -TaskName $taskName
-            if ((Get-ScheduledTask -TaskName $taskName).State -ne 'Running') {
-                if ($taskInfo.LastTaskResult -ne 0) {
-                    throw "SQL initialization task failed with exit code $($taskInfo.LastTaskResult)."
-                }
-                exit 0
-            }
-            Start-Sleep -Seconds 2
-        }
-        throw 'SQL initialization task timed out after 20 minutes.'
-    }
-    finally {
-        Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-    }
 }
 
 $instanceId = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').MSSQLSERVER
@@ -106,6 +100,7 @@ Set-ItemProperty -LiteralPath "$tcpPath\IPAll" -Name TcpPort -Value '1433'
 Restart-Service -Name $sqlServiceName -Force
 
 $marketplaceConnectionString = 'Server=localhost;Initial Catalog=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15'
+Ensure-LocalSystemSqlSysadmin -ConnectionString $marketplaceConnectionString
 for ($attempt = 1; $attempt -le 30; $attempt++) {
     try {
         [void](Get-SqlScalar -ConnectionString $marketplaceConnectionString -CommandText 'SELECT 1;')
