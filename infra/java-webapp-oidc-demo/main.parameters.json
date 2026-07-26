@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "java-oidc-demo"
+    },
+    "adminUsername": {
+      "value": "azadmin"
+    },
+    "adminSourceCidr": {
+      "value": "203.0.113.0/24"
+    },
+    "vmSize": {
+      "value": "Standard_B2s"
+    },
+    "bootstrapScriptUri": {
+      "value": ""
+    },
+    "javaSourceArchiveUri": {
+      "value": ""
+    },
+    "javaSourceArchiveSha256": {
+      "value": ""
+    },
+    "postgresqlPatchUri": {
+      "value": ""
+    },
+    "postgresqlPatchSha256": {
+      "value": ""
+    },
+    "jdkArchiveUri": {
+      "value": ""
+    },
+    "jdkArchiveSha256": {
+      "value": ""
+    },
+    "tomcatArchiveUri": {
+      "value": ""
+    },
+    "tomcatArchiveSha256": {
+      "value": ""
+    },
+    "mavenArchiveUri": {
+      "value": ""
+    },
+    "mavenArchiveSha256": {
+      "value": ""
+    }
+  }
+}

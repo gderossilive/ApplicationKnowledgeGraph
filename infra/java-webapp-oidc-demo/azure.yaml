@@ -1,0 +1,13 @@
+name: java-webapp-oidc-demo
+metadata:
+  template: java-webapp-oidc-demo@0.0.1
+infra:
+  provider: bicep
+  path: .
+hooks:
+  preprovision:
+    shell: sh
+    run: ./scripts/Preprovision-Azd.sh
+  postprovision:
+    shell: sh
+    run: ./scripts/Postprovision-Azd.sh
