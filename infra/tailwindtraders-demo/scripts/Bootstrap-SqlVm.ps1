@@ -122,7 +122,7 @@ $setupArguments = @(
     '/SQLSVCACCOUNT="NT AUTHORITY\NETWORK SERVICE"',
     '/SQLSYSADMINACCOUNTS="BUILTIN\Administrators"',
     '/SECURITYMODE=SQL',
-    "/SAPWD=\"$sqlAdminPassword\"",
+    "/SAPWD=`"$sqlAdminPassword`"",
     '/TCPENABLED=1',
     '/IACCEPTSQLSERVERLICENSETERMS'
 )

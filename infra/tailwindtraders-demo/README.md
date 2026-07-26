@@ -34,6 +34,8 @@ Do not place passwords, SAS tokens, or other secrets in `main.parameters.json`. 
 
 ## Deploy
 
+The demo is orchestrated by Azure Developer CLI. Its `preprovision` hook compiles and validates Bicep and its `postprovision` hook verifies all VM extensions and the public POS endpoint.
+
 Configure Azure CLI from the repository `.env` without importing its unrelated secrets:
 
 ```bash
@@ -42,20 +44,18 @@ bash infra/tailwindtraders-demo/scripts/Set-AzureContext.sh
 
 The script reads only `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and `AZURE_LOCATION`. If required, it opens an Azure device-code login in the configured tenant, verifies the selected subscription, and sets the CLI default location.
 
-Populate `main.parameters.json` with non-secret, versioned artifact locations and a trusted administrator CIDR. Then validate and deploy:
+Create an `azd` environment, configure its Azure settings and secure Bicep parameters, then preview and provision:
 
 ```bash
-az deployment group what-if \
-  --resource-group <resource-group> \
-  --template-file infra/tailwindtraders-demo/main.bicep \
-  --parameters @infra/tailwindtraders-demo/main.parameters.json \
-  --parameters adminPassword='<secure-value>' sqlAdminPassword='<secure-value>' sqlAppPassword='<secure-value>'
-
-az deployment group create \
-  --resource-group <resource-group> \
-  --template-file infra/tailwindtraders-demo/main.bicep \
-  --parameters @infra/tailwindtraders-demo/main.parameters.json \
-  --parameters adminPassword='<secure-value>' sqlAdminPassword='<secure-value>' sqlAppPassword='<secure-value>'
+azd -C infra/tailwindtraders-demo env new tailwind-demo
+azd -C infra/tailwindtraders-demo env set AZURE_SUBSCRIPTION_ID '<subscription-id>'
+azd -C infra/tailwindtraders-demo env set AZURE_LOCATION '<azure-region>'
+azd -C infra/tailwindtraders-demo env set AZURE_RESOURCE_GROUP 'rg-tailwindtraders-demo'
+azd -C infra/tailwindtraders-demo env config set infra.parameters.adminPassword '<secure-value>'
+azd -C infra/tailwindtraders-demo env config set infra.parameters.sqlAdminPassword '<secure-value>'
+azd -C infra/tailwindtraders-demo env config set infra.parameters.sqlAppPassword '<secure-value>'
+azd -C infra/tailwindtraders-demo provision --preview --no-prompt
+azd -C infra/tailwindtraders-demo provision --no-prompt
 ```
 
 The deployment outputs the public IP of the POS and private catalog and SQL IPs. The POS bootstrap writes the private catalog URL and SQL connection string into `TailwindPOS.ini`, so it does not call `backend.tailwindtraders.com` and no longer requires an Access provider.

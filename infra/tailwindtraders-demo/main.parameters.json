@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "environmentName": {
-      "value": "tailwindtraders-demo"
+      "value": "tailwind-demo"
     },
     "adminUsername": {
       "value": "azadmin"

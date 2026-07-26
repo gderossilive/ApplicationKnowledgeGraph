@@ -25,6 +25,6 @@
   },
   "Bootstrap-SqlVm.ps1": {
     "path": "infra/tailwindtraders-demo/scripts/Bootstrap-SqlVm.ps1",
-    "sha256": "da20a11b7bf41ae6e2444adf000bdefc7d3e81bdeb64516fc44bf7dade9d1c92"
+    "sha256": "5c69f0bcdf9ac806b794d8232a7824140624495e512e48c0c2d78d330b17b7c6"
   }
 }

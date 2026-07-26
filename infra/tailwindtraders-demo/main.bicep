@@ -26,14 +26,14 @@ param sqlAppPassword string
 @description('CIDR allowed to open RDP to the POS VM. Set this to a trusted public IP range before deployment.')
 param adminSourceCidr string
 
-@description('Windows VM size for the POS application server.')
-param posVmSize string = 'Standard_D2s_v5'
+@description('Burstable Windows VM size for the POS application server. B1ms provides 2 GiB RAM for IIS and the local build.')
+param posVmSize string = 'Standard_B1ms'
 
-@description('Windows VM size for the private product catalog server.')
-param catalogVmSize string = 'Standard_B2s'
+@description('Burstable Windows VM size for the private product catalog server. B1s is sufficient for the PowerShell listener.')
+param catalogVmSize string = 'Standard_B1s'
 
-@description('Windows VM size for the private SQL Server Express database server.')
-param sqlVmSize string = 'Standard_B2s'
+@description('Burstable Windows VM size for the private SQL Server Express database server. B1ms provides the minimum practical 2 GiB RAM.')
+param sqlVmSize string = 'Standard_B1ms'
 
 @description('Versioned URI of the POS bootstrap script. Host this script in a controlled artifact location before deployment.')
 param posBootstrapScriptUri string
