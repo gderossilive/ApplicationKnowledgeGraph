@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "tailwindtraders-demo"
+    },
+    "adminUsername": {
+      "value": "azadmin"
+    },
+    "adminSourceCidr": {
+      "value": "87.16.232.9/32"
+    },
+    "posBootstrapScriptUri": {
+      "value": "<versioned-bootstrap-pos-script-uri>"
+    },
+    "catalogBootstrapScriptUri": {
+      "value": "<versioned-bootstrap-catalog-script-uri>"
+    },
+    "posArtifactUri": {
+      "value": "<versioned-pos-artifact-uri>"
+    },
+    "posArtifactSha256": {
+      "value": "<sha256-pos-artifact>"
+    },
+    "posDatabaseUri": {
+      "value": "<versioned-pos-mdb-uri>"
+    },
+    "posDatabaseSha256": {
+      "value": "dbc58ab3a5050e4916b2647d540cb2c8c2e5ca94af3056c043786a6dc5b4dc21"
+    },
+    "aspNetCoreHostingBundleUri": {
+      "value": "https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/2.2.8/dotnet-hosting-2.2.8-win.exe"
+    },
+    "accessDatabaseEngineUri": {
+      "value": "<controlled-access-engine-2010-x64-uri>"
+    },
+    "catalogArtifactUri": {
+      "value": "<versioned-catalog-stub-zip-uri>"
+    },
+    "catalogArtifactSha256": {
+      "value": "7d39f8a3b0d6f2078c5791f6ff8cb930a6721a50714c528bb1474f1f2c0108ea"
+    }
+  }
+}

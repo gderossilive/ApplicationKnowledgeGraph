@@ -1,0 +1,17 @@
+[
+  {
+    "code": "1000",
+    "name": "Tailwind Traders Demo T-Shirt",
+    "price": 19.99
+  },
+  {
+    "code": "1001",
+    "name": "Tailwind Traders Demo Hoodie",
+    "price": 49.99
+  },
+  {
+    "code": "1002",
+    "name": "Tailwind Traders Demo Water Bottle",
+    "price": 14.5
+  }
+]

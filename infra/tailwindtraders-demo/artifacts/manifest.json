@@ -1,0 +1,18 @@
+{
+  "catalog-stub.zip": {
+    "path": "infra/tailwindtraders-demo/artifacts/catalog-stub.zip",
+    "sha256": "7d39f8a3b0d6f2078c5791f6ff8cb930a6721a50714c528bb1474f1f2c0108ea"
+  },
+  "POS.mdb": {
+    "path": "infra/tailwindtraders-demo/artifacts/POS.mdb",
+    "sha256": "dbc58ab3a5050e4916b2647d540cb2c8c2e5ca94af3056c043786a6dc5b4dc21"
+  },
+  "Bootstrap-PosVm.ps1": {
+    "path": "infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1",
+    "sha256": "3704101fc35d38e71935a69dd8754cf7dd4c2a13bf994bb6ecab82db5a67f3f6"
+  },
+  "Bootstrap-CatalogVm.ps1": {
+    "path": "infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1",
+    "sha256": "9c6e21b8b72f2736d1e92819a3513a091592c5e5ed2297fea0b034f212688228"
+  }
+}
