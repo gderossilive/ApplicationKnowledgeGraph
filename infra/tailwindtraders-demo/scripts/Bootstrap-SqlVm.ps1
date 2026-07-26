@@ -74,7 +74,8 @@ if (-not $RunAsAdmin) {
         "-SeedScriptSha256 `"$SeedScriptSha256`""
     ) -join ' '
     $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $taskArguments
-    Register-ScheduledTask -TaskName $taskName -Action $taskAction -User ".\$AdminUsername" -Password $adminPassword -RunLevel Highest -Force | Out-Null
+    $taskUser = "$env:COMPUTERNAME\$AdminUsername"
+    Register-ScheduledTask -TaskName $taskName -Action $taskAction -User $taskUser -Password $adminPassword -RunLevel Highest -Force | Out-Null
     Start-ScheduledTask -TaskName $taskName
 
     try {
