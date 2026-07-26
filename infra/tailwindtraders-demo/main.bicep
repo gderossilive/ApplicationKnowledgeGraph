@@ -59,11 +59,11 @@ param posBuildSdkSha512 string
 @description('URI for the supported ASP.NET Core 2.2 Hosting Bundle installer retained by your artifact repository.')
 param aspNetCoreHostingBundleUri string
 
-@description('URI for a verified ZIP containing SQL Server 2017 Express x64 installation media.')
-param sqlServerMediaUri string
+@description('Official URI for the SQL Server 2017 Express x64 bootstrapper downloaded by the SQL VM.')
+param sqlServerBootstrapperUri string
 
-@description('SHA-256 checksum for the SQL Server 2017 Express media ZIP.')
-param sqlServerMediaSha256 string
+@description('SHA-256 checksum for the SQL Server 2017 Express bootstrapper.')
+param sqlServerBootstrapperSha256 string
 
 @description('Versioned URI of the Tailwind POS SQL Server schema script.')
 param sqlDatabaseSchemaScriptUri string
@@ -478,7 +478,7 @@ resource sqlBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
         sqlDatabaseSchemaScriptUri
         sqlDatabaseSeedScriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -SqlServerMediaUri "${sqlServerMediaUri}" -SqlServerMediaSha256 "${sqlServerMediaSha256}" -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-SqlVm.ps1 -SqlServerBootstrapperUri "${sqlServerBootstrapperUri}" -SqlServerBootstrapperSha256 "${sqlServerBootstrapperSha256}" -SqlAdminPasswordBase64 "${base64(sqlAdminPassword)}" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}" -SchemaScriptSha256 "${sqlDatabaseSchemaScriptSha256}" -SeedScriptSha256 "${sqlDatabaseSeedScriptSha256}"'
     }
   }
 }

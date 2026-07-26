@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)] [string]$SqlServerMediaUri,
-    [Parameter(Mandatory = $true)] [string]$SqlServerMediaSha256,
+    [Parameter(Mandatory = $true)] [string]$SqlServerBootstrapperUri,
+    [Parameter(Mandatory = $true)] [string]$SqlServerBootstrapperSha256,
     [Parameter(Mandatory = $true)] [string]$SqlAdminPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SqlAppPasswordBase64,
     [Parameter(Mandatory = $true)] [string]$SchemaScriptSha256,
@@ -22,6 +22,15 @@ function Get-VerifiedFile {
     $actualHash = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
     if ($actualHash -ne $ExpectedHash.ToUpperInvariant()) {
         throw "Checksum validation failed for '$Uri'."
+    }
+}
+
+function Assert-MicrosoftSignature {
+    param([string]$Path)
+
+    $signature = Get-AuthenticodeSignature -LiteralPath $Path
+    if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'CN=Microsoft Corporation') {
+        throw "The Microsoft Authenticode signature validation failed for '$Path'."
     }
 }
 
@@ -70,12 +79,39 @@ if ($sqlAdminPassword -match '["\r\n]') {
 }
 
 New-Item -ItemType Directory -Force -Path $packageRoot, $mediaRoot | Out-Null
-$mediaArchive = Join-Path $packageRoot 'SQLServer2017Express.zip'
-Get-VerifiedFile -Uri $SqlServerMediaUri -Path $mediaArchive -ExpectedHash $SqlServerMediaSha256
-Expand-Archive -LiteralPath $mediaArchive -DestinationPath $mediaRoot -Force
+$downloadRoot = Join-Path $packageRoot 'sql-server-2017-download'
+$bootstrapperPath = Join-Path $downloadRoot 'SQLServer2017-SSEI-Expr.exe'
+Remove-Item -LiteralPath $downloadRoot, $mediaRoot -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $downloadRoot, $mediaRoot | Out-Null
+Get-VerifiedFile -Uri $SqlServerBootstrapperUri -Path $bootstrapperPath -ExpectedHash $SqlServerBootstrapperSha256
+Assert-MicrosoftSignature -Path $bootstrapperPath
+
+$downloadProcess = Start-Process -FilePath $bootstrapperPath -ArgumentList @(
+    '/ACTION=Download',
+    '/MEDIATYPE=Express',
+    '/QUIET',
+    "/MEDIAPATH=$downloadRoot"
+) -Wait -PassThru
+if ($downloadProcess.ExitCode -notin 0, 3010) {
+    throw "SQL Server Express media download failed with exit code $($downloadProcess.ExitCode)."
+}
+
+$expressMedia = Get-ChildItem -LiteralPath $downloadRoot -Filter 'SQLEXPR*_x64_ENU.exe' -Recurse | Select-Object -First 1 -ExpandProperty FullName
+if ($null -eq $expressMedia) {
+    throw 'The SQL Server Express downloader did not create an x64 media executable.'
+}
+Assert-MicrosoftSignature -Path $expressMedia
+
+$extractProcess = Start-Process -FilePath $expressMedia -ArgumentList @(
+    "/x:$mediaRoot",
+    '/Q'
+) -Wait -PassThru
+if ($extractProcess.ExitCode -notin 0, 3010) {
+    throw "SQL Server Express media extraction failed with exit code $($extractProcess.ExitCode)."
+}
 $setupPath = Get-ChildItem -LiteralPath $mediaRoot -Filter 'setup.exe' -Recurse | Select-Object -First 1 -ExpandProperty FullName
 if ($null -eq $setupPath) {
-    throw 'The SQL Server media archive does not contain setup.exe.'
+    throw 'The extracted SQL Server Express media does not contain setup.exe.'
 }
 
 $setupArguments = @(

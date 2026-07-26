@@ -17,7 +17,8 @@ Upload the following immutable, versioned artifacts to a controlled location rea
 1. `Bootstrap-PosVm.ps1`, `Bootstrap-CatalogVm.ps1`, and `Bootstrap-SqlVm.ps1` from `scripts/`.
 2. `Schema-TailwindPos.sql` and `Seed-TailwindPos.sql` from [database](database). The seed is generated from the authoritative [POS.mdb](../../external/TailwindTraders-PointOfSale/Source/WinForms/Upgraded/POS.mdb).
 3. A ZIP with `CatalogStub.ps1` and `catalog.json` from [catalog-stub](catalog-stub), plus its SHA-256 hash.
-4. A ZIP containing the full SQL Server 2017 Express x64 installation media, with `setup.exe` at any level in the ZIP and a SHA-256 hash. Keep this Microsoft binary in a controlled artifact location.
+
+The SQL VM downloads the official Microsoft SQL Server 2017 Express bootstrapper itself, verifies its SHA-256 and Authenticode signature, retrieves the complete x64 Express media, verifies its Microsoft signature, and extracts it locally before installation. No SQL Server installer or media ZIP is stored in this repository or an external artifact location.
 
 To regenerate the data seed after changing `POS.mdb`, install `mdbtools` and run:
 
@@ -27,7 +28,7 @@ bash infra/tailwindtraders-demo/database/Export-PosMdbToSqlServer.sh \
   infra/tailwindtraders-demo/database/Seed-TailwindPos.sql
 ```
 
-`artifacts/manifest.json` records the SHA-256 hashes of repository artifacts. After uploading them, replace only URI values in `main.parameters.json`; retain their recorded checksums. Do not publish SQL Server installation media to the public repository without confirming the applicable redistribution rights.
+`artifacts/manifest.json` records the SHA-256 hashes of repository artifacts. After uploading them, replace only URI values in `main.parameters.json`; retain their recorded checksums. The SQL Server bootstrapper URL and checksum are already pinned in `main.parameters.json`.
 
 Do not place passwords, SAS tokens, or other secrets in `main.parameters.json`. Supply `adminPassword`, `sqlAdminPassword`, and `sqlAppPassword` through secure deployment parameters instead.
 
