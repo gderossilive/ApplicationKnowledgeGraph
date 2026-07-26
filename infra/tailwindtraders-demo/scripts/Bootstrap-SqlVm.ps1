@@ -97,6 +97,7 @@ $tcpPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$instanceId\MSSQLServe
 Set-ItemProperty -LiteralPath $tcpPath -Name Enabled -Value 1
 Set-ItemProperty -LiteralPath "$tcpPath\IPAll" -Name TcpDynamicPorts -Value ''
 Set-ItemProperty -LiteralPath "$tcpPath\IPAll" -Name TcpPort -Value '1433'
+Set-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$instanceId\MSSQLServer" -Name LoginMode -Value 2
 Restart-Service -Name $sqlServiceName -Force
 
 $marketplaceConnectionString = 'Server=localhost;Initial Catalog=master;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;Connection Timeout=15'
