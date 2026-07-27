@@ -2,6 +2,8 @@
 param(
     [Parameter(Mandatory = $true)] [string]$PosSourceArchiveUri,
     [Parameter(Mandatory = $true)] [string]$PosSourceArchiveSha256,
+    [Parameter(Mandatory = $true)] [string]$PosUiArtifactUri,
+    [Parameter(Mandatory = $true)] [string]$PosUiArtifactSha256,
     [Parameter(Mandatory = $true)] [string]$PosBuildSdkUri,
     [Parameter(Mandatory = $true)] [string]$PosBuildSdkSha512,
     [Parameter(Mandatory = $true)] [string]$Net461ReferenceAssembliesUri,
@@ -37,6 +39,7 @@ Install-WindowsFeature -Name Web-Server, Web-Asp-Net45 -IncludeManagementTools |
 
 $hostingBundle = Join-Path $packageRoot 'dotnet-hosting.exe'
 $sourcePackage = Join-Path $packageRoot 'TailwindPOS-source.zip'
+$uiPackage = Join-Path $packageRoot 'TailwindPOS-ui.zip'
 $sdkInstaller = Join-Path $packageRoot 'dotnet-sdk-2.2.207-win-x64.exe'
 $net461ReferencePackage = Join-Path $packageRoot 'microsoft.netframework.referenceassemblies.net461.1.0.3.nupkg'
 $net461ReferenceArchive = Join-Path $packageRoot 'microsoft.netframework.referenceassemblies.net461.1.0.3.zip'
@@ -47,6 +50,7 @@ Invoke-WebRequest -Uri $AspNetCoreHostingBundleUri -OutFile $hostingBundle
 Start-Process -FilePath $hostingBundle -ArgumentList '/quiet', '/norestart' -Wait
 
 Get-VerifiedFile -Uri $PosSourceArchiveUri -Path $sourcePackage -ExpectedHash $PosSourceArchiveSha256
+Get-VerifiedFile -Uri $PosUiArtifactUri -Path $uiPackage -ExpectedHash $PosUiArtifactSha256
 Get-VerifiedFile -Uri $PosBuildSdkUri -Path $sdkInstaller -ExpectedHash $PosBuildSdkSha512 -Algorithm SHA512
 Get-VerifiedFile -Uri $Net461ReferenceAssembliesUri -Path $net461ReferencePackage -ExpectedHash $Net461ReferenceAssembliesSha256
 Start-Process -FilePath $sdkInstaller -ArgumentList '/install', '/quiet', '/norestart' -Wait
@@ -66,6 +70,12 @@ if ($null -eq $projectPath) {
 & 'C:\Program Files\dotnet\dotnet.exe' publish $projectPath --configuration Release --output $publishRoot "/p:FrameworkPathOverride=$frameworkPathOverride"
 if ($LASTEXITCODE -ne 0) {
     throw "TailwindPOS publish failed with exit code $LASTEXITCODE."
+}
+$uiRoot = Join-Path $publishRoot 'wwwroot'
+Remove-Item -LiteralPath $uiRoot -Recurse -Force -ErrorAction SilentlyContinue
+Expand-Archive -LiteralPath $uiPackage -DestinationPath $uiRoot -Force
+if (-not (Test-Path -LiteralPath (Join-Path $uiRoot 'index.html'))) {
+    throw 'The POS UI artifact does not contain wwwroot/index.html.'
 }
 Remove-Item -LiteralPath $posPackage -Force -ErrorAction SilentlyContinue
 Compress-Archive -Path (Join-Path $publishRoot '*') -DestinationPath $posPackage -Force

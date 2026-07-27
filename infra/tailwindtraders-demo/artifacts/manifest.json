@@ -1,4 +1,8 @@
 {
+  "TailwindPOS-ui.zip": {
+    "path": "infra/tailwindtraders-demo/artifacts/TailwindPOS-ui.zip",
+    "sha256": "7efb951d4956433609176a6aeb47d3e10c38aad20f6a93e25e17985e01f3199a"
+  },
   "catalog-stub.zip": {
     "path": "infra/tailwindtraders-demo/artifacts/catalog-stub.zip",
     "sha256": "7d39f8a3b0d6f2078c5791f6ff8cb930a6721a50714c528bb1474f1f2c0108ea"

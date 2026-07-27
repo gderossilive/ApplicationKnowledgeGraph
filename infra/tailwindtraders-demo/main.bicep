@@ -50,6 +50,12 @@ param posSourceArchiveUri string
 @description('SHA-256 checksum for the POS source ZIP.')
 param posSourceArchiveSha256 string
 
+@description('Immutable prebuilt Angular/WebMAP UI ZIP for the POS browser client.')
+param posUiArtifactUri string
+
+@description('SHA-256 checksum for the POS browser UI ZIP.')
+param posUiArtifactSha256 string
+
 @description('URI for the .NET SDK 2.2.207 Windows installer used to build the legacy POS locally.')
 param posBuildSdkUri string
 
@@ -443,7 +449,7 @@ resource posBootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' 
       fileUris: [
         posBootstrapScriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-PosVm.ps1 -PosSourceArchiveUri "${posSourceArchiveUri}" -PosSourceArchiveSha256 "${posSourceArchiveSha256}" -PosBuildSdkUri "${posBuildSdkUri}" -PosBuildSdkSha512 "${posBuildSdkSha512}" -Net461ReferenceAssembliesUri "${net461ReferenceAssembliesUri}" -Net461ReferenceAssembliesSha256 "${net461ReferenceAssembliesSha256}" -CatalogBaseUrl "http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/" -AspNetCoreHostingBundleUri "${aspNetCoreHostingBundleUri}" -SqlServerHost "${sqlPrivateIp}" -SqlDatabaseName "TailwindPOS" -SqlAppUsername "tailwindpos_app" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Bootstrap-PosVm.ps1 -PosSourceArchiveUri "${posSourceArchiveUri}" -PosSourceArchiveSha256 "${posSourceArchiveSha256}" -PosUiArtifactUri "${posUiArtifactUri}" -PosUiArtifactSha256 "${posUiArtifactSha256}" -PosBuildSdkUri "${posBuildSdkUri}" -PosBuildSdkSha512 "${posBuildSdkSha512}" -Net461ReferenceAssembliesUri "${net461ReferenceAssembliesUri}" -Net461ReferenceAssembliesSha256 "${net461ReferenceAssembliesSha256}" -CatalogBaseUrl "http://${catalogPrivateIp}:${catalogApiPort}/webbff/v1/products/" -AspNetCoreHostingBundleUri "${aspNetCoreHostingBundleUri}" -SqlServerHost "${sqlPrivateIp}" -SqlDatabaseName "TailwindPOS" -SqlAppUsername "tailwindpos_app" -SqlAppPasswordBase64 "${base64(sqlAppPassword)}"'
     }
   }
   dependsOn: [
