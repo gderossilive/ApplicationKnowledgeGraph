@@ -21,7 +21,7 @@
   },
   "Bootstrap-PosVm.ps1": {
     "path": "infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1",
-    "sha256": "cb2c7c2848656a09555086b400df4ae409beb77ccea2b17692e8afc8a06d4f07"
+    "sha256": "c0202a54c1f3654b25ac39b27bfc91abdff8af7d14a895246695253853d4a934"
   },
   "Bootstrap-CatalogVm.ps1": {
     "path": "infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1",
