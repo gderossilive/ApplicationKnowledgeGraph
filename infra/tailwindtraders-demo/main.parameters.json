@@ -12,7 +12,7 @@
       "value": "87.16.232.9/32"
     },
     "posBootstrapScriptUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/c21aee0e03f8299202caa6e17dc01951a66882ce/infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/daaa7bc354407b4f54f2baec82dd6a02cf0ca9cc/infra/tailwindtraders-demo/scripts/Bootstrap-PosVm.ps1"
     },
     "catalogBootstrapScriptUri": {
       "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/1d7a0fd824c8dc48b4b2055e1167cb692af9c4ad/infra/tailwindtraders-demo/scripts/Bootstrap-CatalogVm.ps1"
@@ -25,6 +25,12 @@
     },
     "posSourceArchiveSha256": {
       "value": "01bb0728d31fad03c0a6e3f5a8def697a090be17972e68c56377d289d5b58eee"
+    },
+    "posUiArtifactUri": {
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/daaa7bc354407b4f54f2baec82dd6a02cf0ca9cc/infra/tailwindtraders-demo/artifacts/TailwindPOS-ui.zip"
+    },
+    "posUiArtifactSha256": {
+      "value": "7efb951d4956433609176a6aeb47d3e10c38aad20f6a93e25e17985e01f3199a"
     },
     "posBuildSdkUri": {
       "value": "https://builds.dotnet.microsoft.com/dotnet/Sdk/2.2.207/dotnet-sdk-2.2.207-win-x64.exe"
