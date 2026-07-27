@@ -74,7 +74,7 @@ tar -xzf "$artifact_root/maven.tar.gz" -C "$runtime_root"
 jdk_home=$(find "$runtime_root" -mindepth 1 -maxdepth 1 -type d -name '*jdk*' | head -n 1)
 maven_home=$(find "$runtime_root" -mindepth 1 -maxdepth 1 -type d -name 'apache-maven-*' | head -n 1)
 tomcat_extracted=$(find /opt/java-oidc -mindepth 1 -maxdepth 1 -type d -name 'apache-tomcat-*' | head -n 1)
-application_root=$(find "$source_root" -type f -name pom.xml -path '*java-webapp-oidc-migrate-poc*/pom.xml' -printf '%h\n' | head -n 1)
+application_root=$(find "$source_root" -mindepth 2 -maxdepth 2 -type f -name pom.xml -path '*java-webapp-oidc-migrate-poc*/pom.xml' -printf '%h\n' | head -n 1)
 [[ -x "$jdk_home/bin/java" && -x "$maven_home/bin/mvn" && -d "$tomcat_extracted" && -n "$application_root" ]] || { echo 'One or more source artifacts are invalid.' >&2; exit 1; }
 mv "$tomcat_extracted" "$tomcat_root"
 

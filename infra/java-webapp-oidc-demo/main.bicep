@@ -54,6 +54,9 @@ param mavenArchiveUri string
 @description('SHA-256 checksum for the Maven archive.')
 param mavenArchiveSha256 string
 
+@description('Changes when the VM bootstrap must be rerun.')
+param bootstrapRunToken string = 'initial'
+
 @description('Microsoft Entra tenant domain or tenant ID used by the application.')
 param tenantName string
 
@@ -219,12 +222,13 @@ resource bootstrap 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = {
     type: 'CustomScript'
     typeHandlerVersion: '2.1'
     autoUpgradeMinorVersion: true
+    forceUpdateTag: bootstrapRunToken
     protectedSettings: {
       fileUris: [
         bootstrapScriptUri
         postgresqlPatchUri
       ]
-      commandToExecute: 'bash Bootstrap-JavaOidcVm.sh --source-uri "${javaSourceArchiveUri}" --source-sha256 "${javaSourceArchiveSha256}" --postgres-patch-sha256 "${postgresqlPatchSha256}" --jdk-uri "${jdkArchiveUri}" --jdk-sha256 "${jdkArchiveSha256}" --tomcat-uri "${tomcatArchiveUri}" --tomcat-sha256 "${tomcatArchiveSha256}" --maven-uri "${mavenArchiveUri}" --maven-sha256 "${mavenArchiveSha256}" --tenant "${tenantName}" --client-id "${clientId}" --client-secret-base64 "${base64(clientSecret)}" --postgres-password-base64 "${base64(postgresqlAppPassword)}"'
+      commandToExecute: 'rm -rf /var/lib/apt/lists/* && apt-get update && sed -i "s/-type f -name pom.xml/-mindepth 2 -maxdepth 2 -type f -name pom.xml/" Bootstrap-JavaOidcVm.sh && bash Bootstrap-JavaOidcVm.sh --source-uri "${javaSourceArchiveUri}" --source-sha256 "${javaSourceArchiveSha256}" --postgres-patch-sha256 "${postgresqlPatchSha256}" --jdk-uri "${jdkArchiveUri}" --jdk-sha256 "${jdkArchiveSha256}" --tomcat-uri "${tomcatArchiveUri}" --tomcat-sha256 "${tomcatArchiveSha256}" --maven-uri "${mavenArchiveUri}" --maven-sha256 "${mavenArchiveSha256}" --tenant "${tenantName}" --client-id "${clientId}" --client-secret-base64 "${base64(clientSecret)}" --postgres-password-base64 "${base64(postgresqlAppPassword)}"'
     }
   }
 }
