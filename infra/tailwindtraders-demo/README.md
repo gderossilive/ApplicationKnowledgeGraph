@@ -10,13 +10,14 @@ The catalog and SQL VMs have no public IP. The POS VM receives a static public I
 
 ## Prepare artifacts
 
-The POS VM builds the legacy POS from a source archive pinned to the TailwindTraders submodule commit. During bootstrap it installs .NET SDK 2.2.207, executes `dotnet publish`, and creates `C:\TailwindDemo\artifacts\TailwindPOS.zip` before installing the site in IIS.
+The POS VM builds the legacy POS from a source archive pinned to the TailwindTraders submodule commit. During bootstrap it installs .NET SDK 2.2.207, executes `dotnet publish`, verifies and expands the prebuilt `TailwindPOS-ui.zip` browser client into `wwwroot`, and creates `C:\TailwindDemo\artifacts\TailwindPOS.zip` before installing the site in IIS. Node.js and package restoration are intentionally excluded from the B1ms runtime VM.
 
 Upload the following immutable, versioned artifacts to a controlled location reachable by the VM extensions:
 
 1. `Bootstrap-PosVm.ps1`, `Bootstrap-CatalogVm.ps1`, and `Bootstrap-SqlVm.ps1` from `scripts/`.
 2. `Schema-TailwindPos.sql` and `Seed-TailwindPos.sql` from [database](database). The seed is generated from the authoritative [POS.mdb](../../external/TailwindTraders-PointOfSale/Source/WinForms/Upgraded/POS.mdb).
 3. A ZIP with `CatalogStub.ps1` and `catalog.json` from [catalog-stub](catalog-stub), plus its SHA-256 hash.
+4. `artifacts/TailwindPOS-ui.zip`, built for the legacy Angular/WebMAP client with an ES2015 module bundle and an ES5 fallback. Its generated component registration names match the WebMAP server type names.
 
 The SQL VM uses the official `MicrosoftSQLServer:SQL2017-WS2016:SQLDEV` Marketplace image. The bootstrap configures its preinstalled default instance for TCP 1433, applies the schema and seed checksums, and creates the least-privileged application login. This avoids running the SQL Server 2017 Express downloader, whose WPF UI cannot run in the non-interactive Custom Script Extension context. No SQL Server installer or media ZIP is stored in this repository or an external artifact location.
 
