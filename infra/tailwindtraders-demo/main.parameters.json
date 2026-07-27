@@ -27,10 +27,10 @@
       "value": "01bb0728d31fad03c0a6e3f5a8def697a090be17972e68c56377d289d5b58eee"
     },
     "posUiArtifactUri": {
-      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/daaa7bc354407b4f54f2baec82dd6a02cf0ca9cc/infra/tailwindtraders-demo/artifacts/TailwindPOS-ui.zip"
+      "value": "https://raw.githubusercontent.com/gderossilive/ApplicationKnowledgeGraph/6b442fe136292ce529866a17f7d1a48405573f02/infra/tailwindtraders-demo/artifacts/TailwindPOS-ui.zip"
     },
     "posUiArtifactSha256": {
-      "value": "7efb951d4956433609176a6aeb47d3e10c38aad20f6a93e25e17985e01f3199a"
+      "value": "cd7d5d65b50a9845bfe204f0773b327a55465b784bca5ddd6415d07b567fe961"
     },
     "posBuildSdkUri": {
       "value": "https://builds.dotnet.microsoft.com/dotnet/Sdk/2.2.207/dotnet-sdk-2.2.207-win-x64.exe"
