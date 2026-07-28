@@ -10,7 +10,7 @@ The Custom Script extension must receive immutable artifacts because it cannot a
 
 1. `scripts/Bootstrap-JavaOidcVm.sh` from this directory.
 2. A source ZIP containing [java-webapp-oidc-migrate-poc](../../external/java-webapp-oidc-migrate-poc).
-3. [patches/java-postgresql.patch](patches/java-postgresql.patch), which changes the downloaded legacy source to PostgreSQL before it builds.
+3. [java-postgresql.patch](../../src/java-webapp-oidc/patches/java-postgresql.patch), which changes the downloaded legacy source to PostgreSQL before it builds.
 4. A Java 8 JDK Linux x64 tarball, such as a pinned Temurin 8 release.
 5. A Tomcat 8.5 Linux tarball, such as `apache-tomcat-8.5.100.tar.gz` from the Apache archive.
 6. An Apache Maven tarball, such as `apache-maven-3.6.3-bin.tar.gz` from the Apache archive.
